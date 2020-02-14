@@ -21,17 +21,6 @@ option(BUILD_USDMAYA_SCHEMAS "Build optional schemas." ON)
 option(BUILD_USDMAYA_TRANSLATORS "Build optional translators." ON)
 option(SKIP_USDMAYA_TESTS "Build tests" OFF)
 
-if(CMAKE_WANT_UFE_BUILD)
-    find_package(UFE QUIET)
-    if(UFE_FOUND)
-        message(STATUS "Building with UFE ${UFE_VERSION} features enabled.")
-        include_directories(${UFE_INCLUDE_DIR})
-        add_definitions(-DWANT_UFE_BUILD)
-    else()
-        message(STATUS "UFE not found. UFE features will be disabled.")
-    endif()
-endif()
-
 # FindBoost is particularly buggy, and doesn't like custom boost locations.
 # Adding specific components forces calls to _Boost_find_library, which
 # is the rationale for listing them here.
@@ -98,4 +87,4 @@ get_property(PYTHON_LIBRARY_LOCATION GLOBAL PROPERTY GLOBAL_PYTHON_LIBRARY_LOCAT
 configure_file(ALUsdMayaConfig.cmake.in ${PROJECT_BINARY_DIR}/ALUsdMayaConfig.cmake @ONLY)
 
 install(CODE "message(STATUS \"POST INSTALL: Compiling python/pyc for ${AL_INSTALL_PREFIX} ... \")")
-install(CODE "execute_process(COMMAND ${Python_EXECUTABLE} -m compileall ${AL_INSTALL_PREFIX} )")
+install(CODE "execute_process(COMMAND \"${Python_EXECUTABLE}\" -m compileall \"${AL_INSTALL_PREFIX}\" )")

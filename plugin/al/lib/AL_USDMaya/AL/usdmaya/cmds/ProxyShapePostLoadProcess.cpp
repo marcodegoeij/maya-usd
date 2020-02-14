@@ -351,6 +351,9 @@ void ProxyShapePostLoadProcess::connectSchemaPrims(
           dataPlugin->postImport(prim);
         }
       }
+
+      context->updateUniqueKey(prim);
+
       AL_END_PROFILE_SECTION();
     }
   }
@@ -389,7 +392,8 @@ MStatus ProxyShapePostLoadProcess::initialise(nodes::ProxyShape* ptrNode)
       if(obj.hasFn(MFn::kPluginTransformNode))
       {
         MFnDagNode fnChild(obj);
-        if(fnChild.typeId() == nodes::Transform::kTypeId)
+        if(fnChild.typeId() == nodes::Transform::kTypeId ||
+           fnChild.typeId() == nodes::Scope::kTypeId)
         {
           modifier.deleteNode(obj);
         }

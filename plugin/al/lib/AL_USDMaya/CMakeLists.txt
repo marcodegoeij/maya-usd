@@ -111,6 +111,8 @@ list(APPEND AL_usdmaya_nodes_headers
         AL/usdmaya/nodes/ProxyUsdGeomCamera.h
         AL/usdmaya/nodes/RendererManager.h
         AL/usdmaya/nodes/Transform.h
+        AL/usdmaya/nodes/Scope.h
+        AL/usdmaya/nodes/BasicTransformationMatrix.h
         AL/usdmaya/nodes/TransformationMatrix.h
 )
 
@@ -131,6 +133,8 @@ list(APPEND AL_usdmaya_nodes_source
         AL/usdmaya/nodes/ProxyUsdGeomCamera.cpp
         AL/usdmaya/nodes/RendererManager.cpp
         AL/usdmaya/nodes/Transform.cpp
+        AL/usdmaya/nodes/Scope.cpp
+        AL/usdmaya/nodes/BasicTransformationMatrix.cpp
         AL/usdmaya/nodes/TransformationMatrix.cpp
         AL/usdmaya/nodes/proxy/PrimFilter.cpp
 )
@@ -163,14 +167,15 @@ target_compile_definitions(${LIBRARY_NAME}
         AL_MAYA_MACROS_EXPORT
         AL_USDMAYA_EXPORT
         AL_USDMAYA_LOCATION_NAME="${AL_USDMAYA_LOCATION_NAME}"
+        $<$<BOOL:${UFE_FOUND}>:WANT_UFE_BUILD>
 )
 
-# AL_USDMayaGL
 target_include_directories(
     ${LIBRARY_NAME}
     PUBLIC
     ${PXR_INCLUDE_DIRS}
     ${MAYA_INCLUDE_DIRS}
+    $<$<BOOL:${UFE_FOUND}>:${UFE_INCLUDE_DIR}>
 )
 
 set(Boost_LINK_LIBRARIES
@@ -210,11 +215,8 @@ target_link_libraries(${LIBRARY_NAME}
     ${MAYA_OpenMaya_LIBRARY}
     ${MAYA_OpenMayaRender_LIBRARY}
     mayaUsd
+    $<$<BOOL:${UFE_FOUND}>:${UFE_LIBRARY}>
 )
-
-if(UFE_FOUND)
-    target_link_libraries(${LIBRARY_NAME} ${UFE_LIBRARY})
-endif()
 
 if(NEED_BOOST_FILESYSTEM)
     target_link_libraries(${LIBRARY_NAME}
@@ -267,20 +269,17 @@ set_target_properties(${PYTHON_LIBRARY_NAME}
     PROPERTIES 
         PREFIX ""
 )
-if(IS_WINDOWS)
-    set_target_properties(${PYTHON_LIBRARY_NAME}
-        PROPERTIES
-            SUFFIX ".pyd"
-    )
-endif()
+
+set_python_module_suffix(${PYTHON_LIBRARY_NAME})
 
 target_link_libraries(${PYTHON_LIBRARY_NAME}
     ${LIBRARY_NAME}
 )
 
-# rpath setup
+# handle run-time search paths
 if(IS_MACOSX OR IS_LINUX) 
     mayaUsd_init_rpath(rpath lib/python/${arDirPath})
+    mayaUsd_add_rpath(rpath "${AL_INSTALL_PREFIX}/lib")
     mayaUsd_add_rpath(rpath "${CMAKE_INSTALL_PREFIX}/lib")
     mayaUsd_install_rpath(rpath ${PYTHON_LIBRARY_NAME})
 endif()

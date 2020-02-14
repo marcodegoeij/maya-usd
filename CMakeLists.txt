@@ -27,6 +27,7 @@ option(BUILD_MAYAUSD_LIBRARY "Build Core USD libraries." ON)
 option(BUILD_ADSK_PLUGIN "Build Autodesk USD plugin." ON)
 option(BUILD_PXR_PLUGIN "Build the Pixar USD plugin and libraries." ON)
 option(BUILD_AL_PLUGIN "Build the Animal Logic USD plugin and libraries." ON)
+option(BUILD_HDMAYA "Build the Maya-To-Hydra plugin and scene delegate." ON)
 option(BUILD_TESTS "Build tests." ON)
 option(WANT_USD_RELATIVE_PATH "Use relative rpaths for USD libraries" OFF)
 option(CMAKE_WANT_UFE_BUILD "Enable building with UFE (if found)." ON)
@@ -79,6 +80,13 @@ find_package(USD REQUIRED)
 include(cmake/usd.cmake)
 include(${USD_CONFIG_FILE})
 
+if(${MAYA_APP_VERSION} STRLESS "2019" AND CMAKE_WANT_UFE_BUILD)
+    set(CMAKE_WANT_UFE_BUILD OFF)
+    message(AUTHOR_WARNING "========================================================================================= \
+                            UFE is not available in Maya${MAYA_MAJOR_VERSION}. Maya2019 and later are supported only. \
+                            ========================================================================================= ")
+endif()
+
 if(CMAKE_WANT_UFE_BUILD)
     find_package(UFE QUIET)
     if(UFE_FOUND)
@@ -86,6 +94,16 @@ if(CMAKE_WANT_UFE_BUILD)
     else()
         message(STATUS "UFE not found. UFE features will be disabled.")
     endif()
+endif()
+
+if(DEFINED QT_LOCATION)
+    set(CMAKE_PREFIX_PATH "${QT_LOCATION}")
+    find_package(Qt5 5.12 COMPONENTS Core Gui Widgets REQUIRED)
+    if(Qt5_FOUND)
+        message(STATUS "Building with Qt features enabled.")
+    endif()
+else()
+    message(STATUS "QT_LOCATION not set. Building Qt features will be disabled.")
 endif()
 
 #==============================================================================
@@ -106,6 +124,11 @@ if(NOT WIN32)
 endif()
 string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
+# Use RUNPATH instead of RPATH for all shared libs and executables on Linux
+if(IS_LINUX)
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--enable-new-dtags")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--enable-new-dtags")
+endif()
 
 #==============================================================================
 # Tests
@@ -121,6 +144,8 @@ if (BUILD_TESTS)
     if (UFE_FOUND)
         add_subdirectory(test/lib/ufe)
     endif()
+
+    set(MAYAUSD_GTEST_PATH "PATH+:=lib/gtest")
 endif()
 
 #==============================================================================
